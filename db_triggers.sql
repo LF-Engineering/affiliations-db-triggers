@@ -23,6 +23,7 @@ drop trigger if exists identities_after_insert_trigger;
 create trigger identities_after_insert_trigger after insert on identities
 for each row begin
   insert into changes_cache(ky, value, status) values('profile', new.uuid, 'pending') on duplicate key update updated_at = now();
+  insert into changes_cache(ky, value, status) values('identity', new.id, 'pending') on duplicate key update updated_at = now();
 end$
 
 drop trigger if exists identities_after_update_trigger;
@@ -33,6 +34,7 @@ for each row begin
     if not(old.uuid <=> new.uuid) then
       insert into changes_cache(ky, value, status) values('profile', old.uuid, 'pending') on duplicate key update updated_at = now();
     end if;
+    insert into changes_cache(ky, value, status) values('identity', new.id, 'pending') on duplicate key update updated_at = now();
   end if;
 end$
 
@@ -40,6 +42,7 @@ drop trigger if exists identities_after_delete_trigger;
 create trigger identities_after_delete_trigger after delete on identities
 for each row begin
   insert into changes_cache(ky, value, status) values('profile', old.uuid, 'pending') on duplicate key update updated_at = now();
+  insert into changes_cache(ky, value, status) values('identity', old.id, 'pending') on duplicate key update updated_at = now();
 end$
 
 -- profiles
