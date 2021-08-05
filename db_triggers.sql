@@ -90,4 +90,16 @@ for each row begin
   insert into changes_cache(ky, value, status) values('enrollment', convert(old.id, char), 'pending') on duplicate key update updated_at = now();
 end$
 
+-- organizations
+-- if we add new org - we don't have any new roll/profile yet - so no triggers needed
+-- if we delete an org - it will cascade delete rolls with that org so "enrollments on delete" trigger will fire, we're OK
+-- if we update org name - then all rolls using that org must be invalidated
+drop trigger if exists organizations_after_update_trigger;
+create trigger organizations_after_update_trigger after update on organizations
+for each row begin
+  if old.name != new.name then
+    insert into changes_cache(ky, value, status) select 'enrollment', convert(id, char), 'pending' from enrollments where organization_id = new.id on duplicate key update updated_at = now();
+  end if;
+end$
+
 delimiter ;
